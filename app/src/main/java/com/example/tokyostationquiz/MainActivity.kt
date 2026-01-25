@@ -102,8 +102,12 @@ fun QuizScreen(stations: List<Station>, modifier: Modifier = Modifier) {
     var originStation by remember { mutableStateOf(stations.first()) }
     var destinationStation by remember { mutableStateOf(stations.shuffled().first { it != originStation }) }
     val context = LocalContext.current
+    var isOriginCardExpanded by remember { mutableStateOf(false) }
+    var isDestinationCardExpanded by remember { mutableStateOf(false) }
 
     fun nextQuestion() {
+        isOriginCardExpanded = false
+        isDestinationCardExpanded = false
         if (isDepartureFixed) {
             destinationStation = stations.shuffled().first { it != originStation }
         } else {
@@ -169,13 +173,23 @@ fun QuizScreen(stations: List<Station>, modifier: Modifier = Modifier) {
 
         Text(text = "出発駅", fontSize = 24.sp)
         Text(text = originStation.name, fontSize = 48.sp)
-        ExpandableCard(title = "ヒント", station = originStation)
+        ExpandableCard(
+            title = "ヒント",
+            station = originStation,
+            expanded = isOriginCardExpanded,
+            onExpandChange = { isOriginCardExpanded = it }
+        )
 
         Spacer(modifier = Modifier.height(32.dp))
 
         Text(text = "到着駅", fontSize = 24.sp)
         Text(text = destinationStation.name, fontSize = 48.sp)
-        ExpandableCard(title = "ヒント", station = destinationStation)
+        ExpandableCard(
+            title = "ヒント",
+            station = destinationStation,
+            expanded = isDestinationCardExpanded,
+            onExpandChange = { isDestinationCardExpanded = it }
+        )
 
 
         Spacer(modifier = Modifier.height(32.dp))
@@ -197,14 +211,12 @@ fun QuizScreen(stations: List<Station>, modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun ExpandableCard(title: String, station: Station) {
-    var expanded by remember { mutableStateOf(false) }
-
+fun ExpandableCard(title: String, station: Station, expanded: Boolean, onExpandChange: (Boolean) -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 8.dp)
-            .clickable { expanded = !expanded }
+            .clickable { onExpandChange(!expanded) }
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(text = title, style = MaterialTheme.typography.titleMedium)
