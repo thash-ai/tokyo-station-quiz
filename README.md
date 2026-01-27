@@ -1,4 +1,4 @@
-# AI向け技術仕様書：Tokyo Station Quiz App
+# Tokyo Station Quiz App
 
 ## 1. プロジェクト概要 (Project Overview)
 
