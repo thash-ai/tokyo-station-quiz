@@ -2,7 +2,6 @@ package com.example.tokyostationquiz
 
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -31,6 +30,7 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -40,6 +40,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.net.toUri
 import com.example.tokyostationquiz.ui.theme.TokyoStationQuizTheme
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -75,7 +76,8 @@ private fun readStationsJson(context: Context): List<Station> {
         ioException.printStackTrace()
         return emptyList()
     }
-    return Json { ignoreUnknownKeys = true }.decodeFromString<StationData>(jsonString).stations
+    val json = Json { ignoreUnknownKeys = true }
+    return json.decodeFromString<StationData>(jsonString).stations
 }
 
 class MainActivity : ComponentActivity() {
@@ -126,7 +128,7 @@ fun QuizScreen(stations: List<Station>, modifier: Modifier = Modifier) {
             )
         )
     }
-    var currentHistoryIndex by remember { mutableStateOf(0) }
+    var currentHistoryIndex by remember { mutableIntStateOf(0) }
 
     fun nextQuestion() {
         isOriginCardExpanded = false
@@ -309,7 +311,7 @@ fun QuizScreen(stations: List<Station>, modifier: Modifier = Modifier) {
         Button(
             onClick = {
                 val url = "https://www.google.com/maps/dir/?api=1&origin=${originStation.name}駅&destination=${destinationStation.name}駅"
-                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                val intent = Intent(Intent.ACTION_VIEW, url.toUri())
                 context.startActivity(intent)
             }
         ) {
