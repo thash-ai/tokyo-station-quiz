@@ -58,6 +58,14 @@ data class StationData(
     val stations: List<Station>
 )
 
+// Data class for quiz state history
+data class QuizState(
+    val originStation: Station,
+    val destinationStation: Station,
+    val isOriginCardExpanded: Boolean,
+    val isDestinationCardExpanded: Boolean
+)
+
 // Function to read JSON from assets
 private fun readStationsJson(context: Context): List<Station> {
     val jsonString: String
@@ -105,6 +113,21 @@ fun QuizScreen(stations: List<Station>, modifier: Modifier = Modifier) {
     var isOriginCardExpanded by remember { mutableStateOf(false) }
     var isDestinationCardExpanded by remember { mutableStateOf(false) }
 
+    // History management (max 100 items)
+    var history by remember {
+        mutableStateOf(
+            listOf(
+                QuizState(
+                    originStation = originStation,
+                    destinationStation = destinationStation,
+                    isOriginCardExpanded = false,
+                    isDestinationCardExpanded = false
+                )
+            )
+        )
+    }
+    var currentHistoryIndex by remember { mutableStateOf(0) }
+
     fun nextQuestion() {
         isOriginCardExpanded = false
         isDestinationCardExpanded = false
@@ -114,6 +137,42 @@ fun QuizScreen(stations: List<Station>, modifier: Modifier = Modifier) {
             val randomStations = stations.shuffled().take(2)
             originStation = randomStations[0]
             destinationStation = randomStations[1]
+        }
+
+        // Remove history after current index if we're not at the end
+        val trimmedHistory = if (currentHistoryIndex < history.size - 1) {
+            history.subList(0, currentHistoryIndex + 1)
+        } else {
+            history
+        }
+
+        // Add new state to history
+        val newState = QuizState(
+            originStation = originStation,
+            destinationStation = destinationStation,
+            isOriginCardExpanded = false,
+            isDestinationCardExpanded = false
+        )
+
+        var newHistory = trimmedHistory + newState
+
+        // Keep only last 100 items
+        if (newHistory.size > 100) {
+            newHistory = newHistory.drop(1)
+        }
+
+        history = newHistory
+        currentHistoryIndex = newHistory.size - 1
+    }
+
+    fun previousQuestion() {
+        if (currentHistoryIndex > 0) {
+            currentHistoryIndex--
+            val state = history[currentHistoryIndex]
+            originStation = state.originStation
+            destinationStation = state.destinationStation
+            isOriginCardExpanded = state.isOriginCardExpanded
+            isDestinationCardExpanded = state.isDestinationCardExpanded
         }
     }
 
@@ -131,7 +190,28 @@ fun QuizScreen(stations: List<Station>, modifier: Modifier = Modifier) {
             Spacer(Modifier.weight(1f))
             Switch(
                 checked = isDepartureFixed,
-                onCheckedChange = { isDepartureFixed = it }
+                onCheckedChange = {
+                    isDepartureFixed = it
+                    // Clear history and generate new question when mode changes
+                    isOriginCardExpanded = false
+                    isDestinationCardExpanded = false
+                    if (isDepartureFixed) {
+                        destinationStation = stations.shuffled().first { it != originStation }
+                    } else {
+                        val randomStations = stations.shuffled().take(2)
+                        originStation = randomStations[0]
+                        destinationStation = randomStations[1]
+                    }
+                    history = listOf(
+                        QuizState(
+                            originStation = originStation,
+                            destinationStation = destinationStation,
+                            isOriginCardExpanded = false,
+                            isDestinationCardExpanded = false
+                        )
+                    )
+                    currentHistoryIndex = 0
+                }
             )
         }
 
@@ -161,7 +241,19 @@ fun QuizScreen(stations: List<Station>, modifier: Modifier = Modifier) {
                             onClick = {
                                 originStation = station
                                 expanded = false
-                                nextQuestion()
+                                isOriginCardExpanded = false
+                                isDestinationCardExpanded = false
+                                destinationStation = stations.shuffled().first { it != originStation }
+                                // Reset history with new starting station
+                                history = listOf(
+                                    QuizState(
+                                        originStation = originStation,
+                                        destinationStation = destinationStation,
+                                        isOriginCardExpanded = false,
+                                        isDestinationCardExpanded = false
+                                    )
+                                )
+                                currentHistoryIndex = 0
                             }
                         )
                     }
@@ -194,17 +286,34 @@ fun QuizScreen(stations: List<Station>, modifier: Modifier = Modifier) {
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            Button(onClick = {
-                val url = "https://www.google.com/maps/dir/?api=1&origin=${originStation.name}駅&destination=${destinationStation.name}駅"
-                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
-                context.startActivity(intent)
-            }) {
-                Text(text = "Googleマップで確認")
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Button(
+                onClick = {
+                    val url = "https://www.google.com/maps/dir/?api=1&origin=${originStation.name}駅&destination=${destinationStation.name}駅"
+                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                    context.startActivity(intent)
+                },
+                modifier = Modifier.weight(1f)
+            ) {
+                Text(text = "Googleマップ", fontSize = 12.sp)
             }
 
-            Button(onClick = { nextQuestion() }) {
-                Text(text = "次の問題へ")
+            Button(
+                onClick = { previousQuestion() },
+                enabled = currentHistoryIndex > 0,
+                modifier = Modifier.weight(1f)
+            ) {
+                Text(text = "戻る", fontSize = 12.sp)
+            }
+
+            Button(
+                onClick = { nextQuestion() },
+                modifier = Modifier.weight(1f)
+            ) {
+                Text(text = "次へ", fontSize = 12.sp)
             }
         }
     }

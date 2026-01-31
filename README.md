@@ -41,6 +41,14 @@
     data class StationData(
         val stations: List<Station>
     )
+    
+    // 問題履歴用のデータクラス（シリアライズ不要）
+    data class QuizState(
+        val originStation: Station,
+        val destinationStation: Station,
+        val isOriginCardExpanded: Boolean,
+        val isDestinationCardExpanded: Boolean
+    )
     ```
 
 3.  **読み込み処理**: `MainActivity` の `onCreate` ライフサイクルで `readStationsJson()` 関数が一度だけ呼び出され、全駅のリストをメモリにロードします。このリストはコンポーザブルに `State` として渡されます。
@@ -60,6 +68,8 @@ UIはすべて `MainActivity.kt` 内のJetpack Compose関数で構築されて�
 | `destinationStation` | `Station` | 現在のクイズの到着駅。 |
 | `isOriginCardExpanded` | `Boolean` | 出発駅のヒントカード（`ExpandableCard`）の開閉状態。 |
 | `isDestinationCardExpanded`| `Boolean` | 到着駅のヒントカード（`ExpandableCard`）の開閉状態。 |
+| `history` | `List<QuizState>` | 問題の履歴を保存するリスト（最大100件）。アプリ起動中のメモリ上のみ保持。 |
+| `currentHistoryIndex` | `Int` | 現在表示している問題の履歴内位置。 |
 
 ### 4.2. 主要なコンポーザブル (Key Composables)
 
@@ -75,17 +85,37 @@ UIはすべて `MainActivity.kt` 内のJetpack Compose関数で構築されて�
 
 ### 5.1. クイズ生成 (`nextQuestion()` 関数)
 
-この関数は「次の問題へ」ボタンがクリックされたときに呼び出されます。
+この関数は「次へ」ボタンがクリックされたときに呼び出されます。
 
 1.  **ヒントを閉じる**: `isOriginCardExpanded` と `isDestinationCardExpanded` を `false` に設定する。
 2.  **モード分岐**:
     - **出発固定モード (`isDepartureFixed == true`):** `destinationStation` のみ、現在の `originStation` とは異なる駅をランダムに再選出する。
     - **両方ランダムモード (`isDepartureFixed == false`):** `originStation` と `destinationStation` の両方を、全駅リストから重複なくランダムに再選出する。
+3.  **履歴管理**:
+    - 現在の履歴位置が末尾でない場合（戻った状態から次へ進む場合）、現在位置より後の履歴を削除する。
+    - 新しい問題状態を履歴に追加する。
+    - 履歴が100件を超えた場合、最も古い1件を削除する。
+    - `currentHistoryIndex` を履歴の末尾に更新する。
 
-### 5.2. Googleマップ連携
+### 5.2. 前の問題へ戻る (`previousQuestion()` 関数)
 
-「Googleマップで確認」ボタンがクリックされると、以下の処理が実行されます。
+この関数は「戻る」ボタンがクリックされたときに呼び出されます。
+
+1.  **履歴インデックスのチェック**: `currentHistoryIndex > 0` の場合のみ実行。
+2.  **状態の復元**: `currentHistoryIndex` をデクリメントし、`history[currentHistoryIndex]` から出発駅、到着駅、ヒントカードの開閉状態を復元する。
+
+### 5.3. Googleマップ連携
+
+「Googleマップ」ボタンがクリックされると、以下の処理が実行されます。
 
 1.  現在の `originStation` と `destinationStation` の駅名を使って、Googleマップの経路検索用URLを生成します。
     - 例: `https://www.google.com/maps/dir/?api=1&origin=東京駅&destination=新宿駅`
 2.  `Intent.ACTION_VIEW` を使って、このURLを処理できる外部アプリ（通常はGoogleマップ）を起動します。
+
+### 5.4. 履歴のクリア
+
+以下のタイミングで問題履歴がクリアされ、新しい問題で履歴が初期化されます：
+
+1.  **固定モード切り替え時**: `isDepartureFixed` スイッチの状態が変更されたとき。
+2.  **固定駅の変更時**: 出発駅固定モードで、ドロップダウンから新しい出発駅を選択したとき。
+
