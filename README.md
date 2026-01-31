@@ -112,7 +112,17 @@ UIはすべて `MainActivity.kt` 内のJetpack Compose関数で構築されて�
     - 例: `https://www.google.com/maps/dir/?api=1&origin=東京駅&destination=新宿駅`
 2.  `Intent.ACTION_VIEW` を使って、このURLを処理できる外部アプリ（通常はGoogleマップ）を起動します。
 
-### 5.4. 履歴のクリア
+### 5.4. Jorudan路線図リンク機能
+
+ヒントカードを展開すると、各路線がクリック可能な`AssistChip`として表示されます。
+
+1.  **表示形式**: `FlowRow`レイアウトを使用し、路線ごとにチップ形式で表示。画面幅に応じて自動で折り返されます。
+2.  **URL生成**: 路線名をUTF-8でURLエンコードし、Jorudanの路線図URLを生成します。
+    - 例: `https://www.jorudan.co.jp/time/rosenzu/東急田園都市線/` → `https://www.jorudan.co.jp/time/rosenzu/%E6%9D%B1%E6%80%A5%E7%94%B0%E5%9C%92%E9%83%BD%E5%B8%82%E7%B7%9A/`
+3.  **ブラウザ起動**: チップをクリックすると、`Intent.ACTION_VIEW`でブラウザが起動し、該当路線の路線図ページが開きます。
+4.  **デザイン**: チップは`MaterialTheme.colorScheme.secondaryContainer`の背景色で、視覚的にクリック可能であることを示します。
+
+### 5.5. 履歴のクリア
 
 以下のタイミングで問題履歴がクリアされ、新しい問題で履歴が初期化されます：
 
