@@ -287,34 +287,33 @@ fun QuizScreen(stations: List<Station>, modifier: Modifier = Modifier) {
         Spacer(modifier = Modifier.height(32.dp))
 
         Row(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterHorizontally),
             modifier = Modifier.fillMaxWidth()
         ) {
             Button(
-                onClick = {
-                    val url = "https://www.google.com/maps/dir/?api=1&origin=${originStation.name}駅&destination=${destinationStation.name}駅"
-                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
-                    context.startActivity(intent)
-                },
-                modifier = Modifier.weight(1f)
-            ) {
-                Text(text = "Googleマップ", fontSize = 12.sp)
-            }
-
-            Button(
                 onClick = { previousQuestion() },
-                enabled = currentHistoryIndex > 0,
-                modifier = Modifier.weight(1f)
+                enabled = currentHistoryIndex > 0
             ) {
-                Text(text = "戻る", fontSize = 12.sp)
+                Text(text = "前の問題へ")
             }
 
             Button(
-                onClick = { nextQuestion() },
-                modifier = Modifier.weight(1f)
+                onClick = { nextQuestion() }
             ) {
-                Text(text = "次へ", fontSize = 12.sp)
+                Text(text = "次の問題へ")
             }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Button(
+            onClick = {
+                val url = "https://www.google.com/maps/dir/?api=1&origin=${originStation.name}駅&destination=${destinationStation.name}駅"
+                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                context.startActivity(intent)
+            }
+        ) {
+            Text(text = "Googleマップで確認")
         }
     }
 }
