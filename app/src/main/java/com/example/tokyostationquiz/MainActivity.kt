@@ -23,6 +23,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -192,9 +193,8 @@ fun QuizScreen(stations: List<Station>, modifier: Modifier = Modifier) {
             Spacer(Modifier.weight(1f))
             Switch(
                 checked = isDepartureFixed,
-                onCheckedChange = {
-                    isDepartureFixed = it
-                    // Clear history and generate new question when mode changes
+                onCheckedChange = { isChecked ->
+                    isDepartureFixed = isChecked
                     isOriginCardExpanded = false
                     isDestinationCardExpanded = false
                     if (isDepartureFixed) {
@@ -231,7 +231,7 @@ fun QuizScreen(stations: List<Station>, modifier: Modifier = Modifier) {
                     readOnly = true,
                     label = { Text("出発駅") },
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                    modifier = Modifier.menuAnchor()
+                    modifier = Modifier.menuAnchor(type = MenuAnchorType.PrimaryNotEditable, enabled = true)
                 )
                 ExposedDropdownMenu(
                     expanded = expanded,
